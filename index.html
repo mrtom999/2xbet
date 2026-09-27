@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2xbet - ইউজার প্যানেল</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-[#121212] text-slate-100 font-sans pb-24">
+
+    <!-- Header -->
+    <header class="bg-[#1a1a1a] border-b border-zinc-800 p-3 sticky top-0 z-50 flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+            <span class="font-black text-xl italic tracking-wider text-amber-500">2x<span class="text-white">bet</span></span>
+        </div>
+        <div class="flex items-center space-x-2 bg-zinc-900 px-3 py-1 rounded-full border border-zinc-800">
+            <i class="fa-solid fa-wallet text-amber-400 text-xs"></i>
+            <span id="userBalance" class="font-bold text-amber-400 text-xs">৳ 0.00</span>
+        </div>
+    </header>
+
+    <main class="max-w-md mx-auto p-3 space-y-4">
+        <!-- Action Buttons -->
+        <div class="bg-gradient-to-r from-amber-600 to-amber-700 rounded-2xl p-4 shadow-lg text-white">
+            <h2 id="welcomeUser" class="font-bold text-sm mb-1">স্বাগতম!</h2>
+            <p class="text-[11px] text-amber-100 mb-3">ইনস্ট্যান্ট ডিপোজিট ও ফাস্ট উইথড্র সিস্টেম।</p>
+            <div class="flex space-x-2">
+                <button onclick="openModal('depositModal')" class="bg-[#121212] text-amber-400 text-xs font-bold px-4 py-2 rounded-xl shadow">ডিপোজিট</button>
+                <button onclick="openModal('withdrawModal')" class="bg-zinc-900 text-white text-xs font-bold px-4 py-2 rounded-xl shadow border border-amber-500/30">উইথড্র</button>
+            </div>
+        </div>
+
+        <!-- Games Section (20% Win / 80% Loss Logic) -->
+        <div>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-gamepad text-amber-500"></i> গেমসমূহ (বাজি ধরুন)
+            </h3>
+            <div class="grid grid-cols-2 gap-3">
+                <div onclick="playGame('Color Prediction')" class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-center cursor-pointer hover:border-amber-500 transition">
+                    <div class="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-xl flex items-center justify-center mx-auto mb-2 text-xl">🎨</div>
+                    <h4 class="font-bold text-xs">কালার প্রেডিকশন</h4>
+                    <p class="text-[10px] text-zinc-500 mt-1">লাল / সবুজ</p>
+                </div>
+                <div onclick="playGame('Spin Wheel')" class="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-center cursor-pointer hover:border-amber-500 transition">
+                    <div class="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-xl flex items-center justify-center mx-auto mb-2 text-xl">🎡</div>
+                    <h4 class="font-bold text-xs">স্পিন হুইল</h4>
+                    <p class="text-[10px] text-zinc-500 mt-1">লাকি স্পিন</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Deposit Modal -->
+    <div id="depositModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-800 w-full max-w-sm rounded-3xl p-6 relative">
+            <button onclick="closeModal('depositModal')" class="absolute top-4 right-4 text-zinc-400"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="text-base font-bold text-amber-500 mb-3">ডিপোজিট (সেন্ড মানি)</h3>
+            
+            <div id="adminNotice" class="bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl mb-3 text-xs text-amber-300">
+                এডমিন নম্বর লোড হচ্ছে...
+            </div>
+
+            <div class="space-y-3">
+                <select id="depMethod" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs text-white outline-none">
+                    <option value="bKash">বিকাশ (bKash)</option>
+                    <option value="Nagad">নগদ (Nagad)</option>
+                    <option value="Rocket">রকেট (Rocket)</option>
+                </select>
+                <input type="number" id="depAmount" placeholder="টাকার পরিমাণ (BDT)" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs text-white outline-none">
+                <input type="text" id="depTrxId" placeholder="TrxID দিন" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs text-white outline-none">
+                <button onclick="submitDepositRequest()" class="w-full bg-amber-500 text-zinc-950 font-bold py-3 rounded-xl text-xs">ডিপোজিট জমা দিন</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Withdraw Modal -->
+    <div id="withdrawModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-zinc-900 border border-zinc-800 w-full max-w-sm rounded-3xl p-6 relative">
+            <button onclick="closeModal('withdrawModal')" class="absolute top-4 right-4 text-zinc-400"><i class="fa-solid fa-xmark text-lg"></i></button>
+            <h3 class="text-base font-bold text-amber-500 mb-3">উইথড্র রিকোয়েস্ট</h3>
+            <div class="space-y-3">
+                <select id="wdMethod" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs text-white outline-none">
+                    <option value="bKash">বিকাশ (bKash)</option>
+                    <option value="Nagad">নগদ (Nagad)</option>
+                </select>
+                <input type="text" id="wdNumber" placeholder="নম্বর (01XXXXXXXXX)" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs text-white outline-none">
+                <input type="number" id="wdAmount" placeholder="পরিমাণ (BDT)" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs text-white outline-none">
+                <button onclick="submitWithdrawRequest()" class="w-full bg-amber-500 text-zinc-950 font-bold py-3 rounded-xl text-xs">উইথড্র পাঠান</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase & Game Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, onSnapshot, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const currentUser = localStorage.getItem("current_user");
+        if(!currentUser) {
+            window.location.href = "login.html";
+        } else {
+            document.getElementById("welcomeUser").innerText = "স্বাগতম, " + currentUser + "!";
+        }
+
+        const userRef = doc(db, "users", currentUser);
+
+        onSnapshot(userRef, (docSnap) => {
+            if (docSnap.exists()) {
+                window.currentBalance = docSnap.data().balance || 0;
+                document.getElementById("userBalance").innerText = "৳ " + window.currentBalance.toFixed(2);
+            }
+        });
+
+        onSnapshot(doc(db, "settings", "payment"), (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                document.getElementById("adminNotice").innerHTML = `সেন্ড মানি করুন (${data.method || 'Bkash/Nagad'}): <b>${data.number || '01XXXXXXXXX'}</b>`;
+            }
+        });
+
+        window.submitDepositRequest = async function() {
+            const method = document.getElementById("depMethod").value;
+            const amount = Number(document.getElementById("depAmount").value);
+            const trxId = document.getElementById("depTrxId").value;
+            if(!amount || !trxId) { alert("সব তথ্য পূরণ করুন"); return; }
+
+            await addDoc(collection(db, "transactions"), {
+                userId: currentUser,
+                type: "Deposit",
+                method,
+                amount,
+                trxId,
+                status: "Pending",
+                timestamp: new Date()
+            });
+            alert("ডিপোজিট রিকোয়েস্ট জমা হয়েছে! এডমিন অ্যাপ্রুভ করলে ব্যালেন্স যোগ হবে।");
+            closeModal('depositModal');
+        };
+
+        window.submitWithdrawRequest = async function() {
+            const amount = Number(document.getElementById("wdAmount").value);
+            const number = document.getElementById("wdNumber").value;
+            if(!amount || !number) { alert("সব তথ্য পূরণ করুন"); return; }
+            if(amount > window.currentBalance) { alert("আপনার অ্যাকাউন্টে পর্যাপ্ত টাকা নেই!"); return; }
+
+            await updateDoc(userRef, { balance: increment(-amount) });
+            await addDoc(collection(db, "transactions"), {
+                userId: currentUser,
+                type: "Withdraw",
+                number,
+                amount,
+                status: "Pending",
+                timestamp: new Date()
+            });
+            alert("উইথড্র রিকোয়েস্ট সফলভাবে পাঠানো হয়েছে!");
+            closeModal('withdrawModal');
+        };
+
+        // 20% Win / 80% Loss Logic
+        window.playGame = async function(gameName) {
+            let bet = prompt(gameName + " - বাজির পরিমাণ লিখুন (টাকা):");
+            bet = Number(bet);
+            if(!bet || bet <= 0) return;
+            if(bet > window.currentBalance) { alert("আপনার অ্যাকাউন্টে পর্যাপ্ত টাকা নেই!"); return; }
+
+            const randomChance = Math.random() * 100;
+            const isWin = randomChance < 20; // 20% win probability
+
+            if(isWin) {
+                const winAmount = bet * 2;
+                await updateDoc(userRef, { balance: increment(bet) });
+                alert("🎉 অভিনন্দন! আপনি জিতেছেন ৳ " + winAmount);
+            } else {
+                await updateDoc(userRef, { balance: increment(-bet) });
+                alert("❌ অপছন্দনীয়! আপনি এই রাউন্ডে হেরে গেছেন ৳ " + bet);
+            }
+        };
+    </script>
+    <script>
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    </script>
+</body>
+</html>
