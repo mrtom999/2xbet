@@ -31,6 +31,12 @@
             </div>
         </div>
 
+        <!-- Success Message Box (Hidden by default) -->
+        <div id="successMessage" class="hidden bg-emerald-500/10 border border-emerald-500/30 p-4 rounded-2xl text-center space-y-1">
+            <h4 class="font-bold text-emerald-400 text-sm">Thank you your submit</h4>
+            <p class="text-xs text-emerald-200">আপনার আবেদন সম্পন্ন হয়েছে</p>
+        </div>
+
         <!-- Games Section (20% Win / 80% Loss Logic) -->
         <div>
             <h3 class="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-3 flex items-center gap-2">
@@ -96,15 +102,14 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, doc, updateDoc, onSnapshot, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
- const firebaseConfig = {
-  apiKey: "AIzaSyC3gSv411KAjoszF87cpc57_AP1U9Tv38k",
-  authDomain: "xbet-c76ad.firebaseapp.com",
-  projectId: "xbet-c76ad",
-  storageBucket: "xbet-c76ad.appspot.com",
-  messagingSenderId: "459429884878",
-  appId: "1:459429884878:web:83d5c89537b8c3e3daad67"
-};
-
+        const firebaseConfig = {
+          apiKey: "AIzaSyC3gSv411KAjoszF87cpc57_AP1U9Tv38k",
+          authDomain: "xbet-c76ad.firebaseapp.com",
+          projectId: "xbet-c76ad",
+          storageBucket: "xbet-c76ad.appspot.com",
+          messagingSenderId: "459429884878",
+          appId: "1:459429884878:web:83d5c89537b8c3e3daad67"
+        };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -132,11 +137,19 @@
             }
         });
 
+        function showSuccessAlert() {
+            const msgBox = document.getElementById("successMessage");
+            msgBox.classList.remove("hidden");
+            setTimeout(() => {
+                msgBox.classList.add("hidden");
+            }, 4000); // ৪ সেকেন্ড পর মেসেজটি নিজে থেকেই হারিয়ে যাবে
+        }
+
         window.submitDepositRequest = async function() {
             const method = document.getElementById("depMethod").value;
             const amount = Number(document.getElementById("depAmount").value);
             const trxId = document.getElementById("depTrxId").value;
-            if(!amount || !trxId) { alert("সব তথ্য পূরণ করুন"); return; }
+            if(!amount || !trxId) { return; }
 
             await addDoc(collection(db, "transactions"), {
                 userId: currentUser,
@@ -147,15 +160,15 @@
                 status: "Pending",
                 timestamp: new Date()
             });
-            alert("ডিপোজিট রিকোয়েস্ট জমা হয়েছে! এডমিন অনুমোদন করলে ব্যালেন্স যোগ হবে।");
             closeModal('depositModal');
+            showSuccessAlert();
         };
 
         window.submitWithdrawRequest = async function() {
             const amount = Number(document.getElementById("wdAmount").value);
             const number = document.getElementById("wdNumber").value;
-            if(!amount || !number) { alert("সব তথ্য পূরণ করুন"); return; }
-            if(amount > window.currentBalance) { alert("আপনার অ্যাকাউন্টে পর্যাপ্ত টাকা নেই!"); return; }
+            if(!amount || !number) { return; }
+            if(amount > window.currentBalance) { return; }
 
             await updateDoc(userRef, { balance: increment(-amount) });
             await addDoc(collection(db, "transactions"), {
@@ -166,8 +179,8 @@
                 status: "Pending",
                 timestamp: new Date()
             });
-            alert("উইথড্র রিকোয়েস্ট সফলভাবে পাঠানো হয়েছে!");
             closeModal('withdrawModal');
+            showSuccessAlert();
         };
 
         // 20% Win / 80% Loss Logic
@@ -175,18 +188,15 @@
             let bet = prompt(gameName + " - বাজির পরিমাণ লিখুন (টাকা):");
             bet = Number(bet);
             if(!bet || bet <= 0) return;
-            if(bet > window.currentBalance) { alert("আপনার অ্যাকাউন্টে পর্যাপ্ত টাকা নেই!"); return; }
+            if(bet > window.currentBalance) { return; }
 
             const randomChance = Math.random() * 100;
             const isWin = randomChance < 20; // 20% win probability
 
             if(isWin) {
-                const winAmount = bet * 2;
                 await updateDoc(userRef, { balance: increment(bet) });
-                alert("🎉 অভিনন্দন! আপনি জিতেছেন ৳ " + winAmount);
             } else {
                 await updateDoc(userRef, { balance: increment(-bet) });
-                alert("❌ অপছন্দনীয়! আপনি এই রাউন্ডে হেরে গেছেন ৳ " + bet);
             }
         };
     </script>
