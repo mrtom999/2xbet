@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2xbet - এডমিন প্যানেল</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-[#121212] text-slate-100 font-sans p-4">
+
+    <!-- Admin Login Screen (Hidden after successful login) -->
+    <div id="adminLoginBox" class="max-w-sm mx-auto mt-20 bg-[#1a1a1a] border border-zinc-800 p-6 rounded-3xl shadow-xl space-y-4">
+        <h2 class="font-bold text-base text-amber-500 text-center"><i class="fa-solid fa-lock mr-2"></i>এডমিন সিকিউরিটি লগইন</h2>
+        <div class="space-y-3">
+            <input type="text" id="adminUser" placeholder="ইউজারনেম (riyad@999)" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs text-white outline-none">
+            <input type="password" id="adminPass" placeholder="পাসওয়ার্ড" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs text-white outline-none">
+            <button onclick="verifyAdmin()" class="w-full bg-amber-500 text-zinc-950 font-bold py-3 rounded-xl text-xs">লগইন করুন</button>
+        </div>
+        <div class="text-center">
+            <a href="index.html" class="text-xs text-zinc-500 hover:text-zinc-300">← ইউজার প্যানেলে ফিরে যান</a>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard (Hidden initially) -->
+    <div id="adminDashboard" class="max-w-4xl mx-auto space-y-4 hidden">
+        <header class="bg-[#1a1a1a] border border-zinc-800 p-4 rounded-2xl flex justify-between items-center">
+            <h1 class="font-bold text-sm text-amber-500"><i class="fa-solid fa-shield-halved mr-2"></i>2xbet সিক্রেট এডমিন প্যানেল</h1>
+            <div class="flex space-x-2">
+                <a href="index.html" class="text-xs bg-zinc-800 px-3 py-1.5 rounded-xl text-zinc-300">ইউজার প্যানেল</a>
+                <button onclick="location.reload()" class="text-xs bg-rose-600 px-3 py-1.5 rounded-xl text-white">লগআউট</button>
+            </div>
+        </header>
+
+        <!-- Change Payment Number -->
+        <div class="bg-[#1a1a1a] border border-zinc-800 rounded-2xl p-4">
+            <h3 class="font-bold text-xs mb-3 text-amber-400">ডিপোজিট নম্বর পরিবর্তন করুন</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <select id="adminMethod" class="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 text-xs text-white outline-none">
+                    <option value="Bkash">Bkash</option>
+                    <option value="Nagad">Nagad</option>
+                    <option value="Rocket">Rocket</option>
+                </select>
+                <input type="text" id="adminNumber" placeholder="নম্বর দিন (017...)" class="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 text-xs text-white outline-none">
+                <button onclick="updateNumber()" class="bg-amber-500 text-zinc-950 font-bold py-2 rounded-xl text-xs">নম্বর আপডেট</button>
+            </div>
+        </div>
+
+        <!-- Registered Users List (Showing Usernames & Passwords) -->
+        <div class="bg-[#1a1a1a] border border-zinc-800 rounded-2xl p-4">
+            <h3 class="font-bold text-xs mb-3 text-amber-400">নিবন্ধিত ইউজার তালিকা ও পাসওয়ার্ড</h3>
+            <div id="usersList" class="space-y-2">
+                <p class="text-xs text-zinc-500 text-center py-2">লোড হচ্ছে...</p>
+            </div>
+        </div>
+
+        <!-- Transaction Approval List -->
+        <div class="bg-[#1a1a1a] border border-zinc-800 rounded-2xl p-4">
+            <h3 class="font-bold text-xs mb-3 text-zinc-300">লেনদেন ও ডিপোজিট/উইথড্র অনুমোদন তালিকা</h3>
+            <div id="requestList" class="space-y-3">
+                <p class="text-xs text-zinc-500 text-center py-4">লোড হচ্ছে...</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, updateDoc, deleteDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Verify Admin Credentials
+        window.verifyAdmin = function() {
+            const u = document.getElementById("adminUser").value.trim();
+            const p = document.getElementById("adminPass").value.trim();
+
+            if(u === "riyad@999" && p === "riyad99932190") {
+                document.getElementById("adminLoginBox").classList.add("hidden");
+                document.getElementById("adminDashboard").classList.remove("hidden");
+                loadAdminData();
+            } else {
+                alert("ভুল ইউজারনেম অথবা পাসওয়ার্ড!");
+            }
+        };
+
+        window.updateNumber = async function() {
+            const method = document.getElementById("adminMethod").value;
+            const number = document.getElementById("adminNumber").value;
+            if(!number) { alert("নম্বর লিখুন"); return; }
+
+            await setDoc(doc(db, "settings", "payment"), { method, number });
+            alert("নম্বর সফলভাবে পরিবর্তন করা হয়েছে!");
+            document.getElementById("adminNumber").value = "";
+        };
+
+        function loadAdminData() {
+            // Load Users List
+            const usersContainer = document.getElementById("usersList");
+            onSnapshot(collection(db, "users"), (snapshot) => {
+                usersContainer.innerHTML = "";
+                if(snapshot.empty) {
+                    usersContainer.innerHTML = `<p class="text-xs text-zinc-500 text-center">কোনো ইউজার নেই</p>`;
+                    return;
+                }
+                snapshot.forEach(docSnap => {
+                    const uData = docSnap.data();
+                    const div = document.createElement("div");
+                    div.className = "bg-zinc-950 border border-zinc-800 p-2.5 rounded-xl flex justify-between items-center text-xs";
+                    div.innerHTML = `<span>ইউজার: <b>${uData.username || docSnap.id}</b> | পাসওয়ার্ড: <span class="text-amber-400">${uData.password || 'N/A'}</span></span> <span class="text-zinc-400">ব্যালেন্স: ৳ ${uData.balance || 0}</span>`;
+                    usersContainer.appendChild(div);
+                });
+            });
+
+            // Load Transactions List
+            const listContainer = document.getElementById("requestList");
+            onSnapshot(collection(db, "transactions"), (snapshot) => {
+                listContainer.innerHTML = "";
+                if (snapshot.empty) {
+                    listContainer.innerHTML = `<p class="text-xs text-zinc-500 text-center py-4">কোনো লেনদেন নেই</p>`;
+                    return;
+                }
+
+                snapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const id = docSnap.id;
+                    
+                    if(data.status === "Pending") {
+                        const div = document.createElement("div");
+                        div.className = "bg-zinc-950 border border-zinc-800 p-3 rounded-xl flex justify-between items-center gap-2";
+                        div.innerHTML = `
+                            <div>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded ${data.type === 'Deposit' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}">${data.type} (${data.method || 'উইথড্র'})</span>
+                                <h4 class="font-bold text-xs mt-1">ইউজার: ${data.userId} | পরিমাণ: ৳ ${data.amount}</h4>
+                                <p class="text-[11px] text-zinc-400">${data.trxId ? 'TrxID: ' + data.trxId : 'নম্বর: ' + data.number}</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="approveReq('${id}', '${data.userId}', ${data.amount}, '${data.type}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg">অনুমোদন</button>
+                                <button onclick="rejectReq('${id}')" class="bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg">বাতিল</button>
+                            </div>
+                        `;
+                        listContainer.appendChild(div);
+                    }
+                });
+            });
+        }
+
+        window.approveReq = async function(trxId, userId, amount, type) {
+            await updateDoc(doc(db, "transactions", trxId), { status: "Approved" });
+            
+            if(type === "Deposit") {
+                const userRef = doc(db, "users", userId);
+                await updateDoc(userRef, { balance: increment(amount) });
+                alert("ডিপোজিট অনুমোদন করা হয়েছে এবং ইউজারের ব্যালেন্সে টাকা যোগ হয়েছে!");
+            } else {
+                alert("উইথড্র রিকোয়েস্ট অনুমোদন করা হয়েছে!");
+            }
+        };
+
+        window.rejectReq = async function(trxId) {
+            await updateDoc(doc(db, "transactions", trxId), { status: "Rejected" });
+            alert("লেনদেনটি বাতিল করা হয়েছে!");
+        };
+    </script>
+</body>
+</html>
