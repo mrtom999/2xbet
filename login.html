@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2xbet - লগইন / সাইনআপ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-[#121212] text-slate-100 font-sans flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-[#1a1a1a] border border-zinc-800 w-full max-w-sm rounded-3xl p-6 shadow-2xl space-y-6">
+        <div class="text-center">
+            <span class="font-black text-2xl italic tracking-wider text-amber-500">2x<span class="text-white">bet</span></span>
+            <p id="formTitle" class="text-xs text-zinc-400 mt-1">আপনার অ্যাকাউন্টে লগইন করুন</p>
+        </div>
+
+        <div class="space-y-3">
+            <div>
+                <label class="text-[10px] text-zinc-400 block mb-1">ইউজারনেম</label>
+                <input type="text" id="username" placeholder="যেমন: alomgir333" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs text-white outline-none focus:border-amber-500">
+            </div>
+            <div>
+                <label class="text-[10px] text-zinc-400 block mb-1">পাসওয়ার্ড</label>
+                <input type="password" id="password" placeholder="••••••••" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs text-white outline-none focus:border-amber-500">
+            </div>
+            
+            <button id="actionBtn" onclick="handleAuth()" class="w-full bg-amber-500 text-zinc-950 font-bold py-3 rounded-xl text-xs hover:bg-amber-400 transition">লগইন</button>
+        </div>
+
+        <div class="text-center">
+            <button onclick="toggleMode()" id="switchText" class="text-xs text-amber-400 hover:underline">একটি অ্যাকাউন্ট নেই? নিবন্ধন করুন</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let isSignup = false;
+        window.toggleMode = function() {
+            isSignup = !isSignup;
+            document.getElementById("formTitle").innerText = isSignup ? "নতুন অ্যাকাউন্ট নিবন্ধন করুন" : "আপনার অ্যাকাউন্টে লগইন করুন";
+            document.getElementById("actionBtn").innerText = isSignup ? "নিবন্ধন (Sign Up)" : "লগইন";
+            document.getElementById("switchText").innerText = isSignup ? "ইতিমধ্যে অ্যাকাউন্ট আছে? লগইন করুন" : "একটি অ্যাকাউন্ট নেই? নিবন্ধন করুন";
+        };
+
+        window.handleAuth = async function() {
+            const user = document.getElementById("username").value.trim();
+            const pass = document.getElementById("password").value.trim();
+            if(!user || !pass) { alert("ইউজারনেম এবং পাসওয়ার্ড দিন"); return; }
+
+            const userRef = doc(db, "users", user);
+            const snap = await getDoc(userRef);
+
+            if(isSignup) {
+                if(snap.exists()) {
+                    alert("এই ইউজারনেমটি আগেই রেজিস্টার্ড করা আছে! অন্য নাম দিন।");
+                    return;
+                }
+                await setDoc(userRef, { password: pass, balance: 0, createdAt: new Date() });
+                alert("নিবন্ধন সফল হয়েছে! এখন লগইন করুন।");
+                toggleMode();
+            } else {
+                if(!snap.exists()) {
+                    alert("এই নামে কোনো অ্যাকাউন্ট নেই! আগে নিবন্ধন করুন।");
+                    return;
+                }
+                if(snap.data().password !== pass) {
+                    alert("পাসওয়ার্ড ভুল হয়েছে!");
+                    return;
+                }
+
+                alert("দয়া করে অপেক্ষা করুন...");
+                localStorage.setItem("current_user", user);
+                window.location.href = "index.html";
+            }
+        };
+    </script>
+</body>
+</html>
